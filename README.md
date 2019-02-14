@@ -28,5 +28,5 @@ This function will produce a photoshop psd file called: "output.psd" which conta
 This function will read the input psd file and extract the layer images and metadata into the Matlab workspace.
 
 ### Examples: 
-- `psdRead("input.psd");` Here "input.psd" is a psd file in the current directory.
-- `psdRead("C:\Users\USER\Downloads\input.psd");`
+- `psdRead("input");` or `psdRead("input.psd");` Here or "input.psd" is a psd file in the current directory.
+- `psdRead("C:\Users\USER\Downloads\input");` or `psdRead("C:\Users\USER\Downloads\input.psd");`
