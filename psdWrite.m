@@ -90,7 +90,7 @@ if exist('OCTAVE_VERSION', 'builtin') ~= 0
     outputFileName = strcat(outputFileName, '.psd');
   end
 else
-  if endsWith(outputFileName, ".psd", 'IgnoreCase', true)
+  if ~endsWith(outputFileName, ".psd", 'IgnoreCase', true)
     outputFileName = strcat(outputFileName, '.psd');
   end
 end
