@@ -34,4 +34,4 @@ This function will read the input psd file and extract the layer images and meta
 ## Limitations:
 - Only works with 8-Bit images (if otherwise, the images are converted to 8-Bits).
 - Only works with uncompressed or run length encoded data in the psd file.
-- Probably many other limitations (specially for psdRead, when reading psd files which were not written using the psdWrite function).
+- Probably many other limitations (specially when reading psd files which were not written using the psdWrite function).
