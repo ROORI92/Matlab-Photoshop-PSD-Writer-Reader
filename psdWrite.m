@@ -1,4 +1,4 @@
-function psdWrite(inputFolderName, outputFileName)
+function psdWrite(inputFolder, outputFile)
 %------------------------------- Function Header -------------------------------
 %
 % Function Name:
@@ -8,34 +8,20 @@ function psdWrite(inputFolderName, outputFileName)
 %   Produces a PSD file containing the input images as layers.
 %
 % Syntax:
-%   psdWrite(inputFolderName, outputFileName);
+%   psdWrite(inputFolder, outputFile);
 %
 % Inputs:
-%   inputFolderName - Name or path of the folder which contains the images. If 
-%                      name is given then folder must be located in the same 
-%                      directory as the function.
-%   outputFileName  - Name or path of the output PSD file.
+%   inputFolder - Name or path of the folder which contains the images. If name
+%                 is given then folder must be located in the same directory
+%                 as the function.
 %
-% Example: 
+%   outputFile  - Name or path of the output PSD file.
+%
+% Examples: 
 %   psdWrite("images", "output");
-%
-% License:
-%   Copyright (C) {{ 2019 }} {{ Ramzi Theodory and Serina Giha }}
-%   This program is free software: you can redistribute it and/or modify
-%   it under the terms of the GNU Affero General Public License as published by
-%   the Free Software Foundation, either version 3 of the License, or
-%   (at your option) any later version.
-%
-%   This program is distributed in the hope that it will be useful,
-%   but WITHOUT ANY WARRANTY; without even the implied warranty of
-%   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-%   GNU Affero General Public License for more details.
-%
-%   You should have received a copy of the GNU Affero General Public License
-%   along with this program.  If not, see <http://www.gnu.org/licenses/>.
-%
-% Authors: 
-%   Ramzi Theodory and Serina Giha
+%   psdWrite("images", "output.psd");
+%   psdWrite("C:\Users\USER\Downloads\images", "C:\Users\USER\Downloads\output");
+%   psdWrite("C:\Users\USER\Downloads\images", "C:\Users\USER\Downloads\output.psd");
 %
 % Last revision:
 %   14. February 2019
@@ -46,7 +32,7 @@ tic;
 
 fprintf("Processing Input Images...");
 
-startFolder = cd (inputFolderName);
+startFolder = cd (inputFolder);
 
 imageFiles = [dir('*.jpeg'); dir('*.jpg'); dir('*.png')];
 
@@ -86,18 +72,18 @@ header.imageResources.data = [56;66;73;77;3;237;0;0;0;0;0;16;0;72;0;0;0;1;0;1;0;
 
 % Check if Octave or Matlab
 if exist('OCTAVE_VERSION', 'builtin') ~= 0
-  if (length(regexp(outputFileName, ".*\.psd$"))==0)
-    outputFileName = strcat(outputFileName, '.psd');
+  if (length(regexp(outputFile, ".*\.psd$"))==0)
+    outputFile = strcat(outputFile, '.psd');
   end
 else
-  if ~endsWith(outputFileName, ".psd", 'IgnoreCase', true)
-    outputFileName = strcat(outputFileName, '.psd');
+  if ~endsWith(outputFile, ".psd", 'IgnoreCase', true)
+    outputFile = strcat(outputFile, '.psd');
   end
 end
 
 fprintf("Opening Output File...");
 
-fid = fopen(outputFileName, 'w');
+fid = fopen(outputFile, 'w');
 
 fprintf(" Done\n");
 

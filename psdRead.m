@@ -2,40 +2,25 @@ function outputStructure = psdRead(inputFile)
 %------------------------------- Function Header -------------------------------
 %
 % Function Name:
-%   psdWrite
+%   psdRead
 %
 % Description:
-%   Produces a PSD file containing the input images as layers.
+%   Reads a PSD file and extracts metadata and layers to workspace.
 %
 % Syntax:
-%   psdWrite(inputFolderName, outputFileName);
+%   psdRead(inputFile);
 %
 % Inputs:
-%   inputFolderName - Name or path of the folder which contains the images. If 
-%                      name is given then folder must be located in the same 
-%                      directory as the function.
-%   outputFileName  - Name or path of the output PSD file.
+%   inputFile - Name or path of the input PSD file.
 %
-% Example: 
-%   psdWrite("images", "output");
+% Outputs:
+%   outputStructure - Structure where metadata and layers are stored
 %
-% License:
-%   Copyright (C) {{ 2019 }} {{ Ramzi Theodory and Serina Giha }}
-%   This program is free software: you can redistribute it and/or modify
-%   it under the terms of the GNU Affero General Public License as published by
-%   the Free Software Foundation, either version 3 of the License, or
-%   (at your option) any later version.
-%
-%   This program is distributed in the hope that it will be useful,
-%   but WITHOUT ANY WARRANTY; without even the implied warranty of
-%   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-%   GNU Affero General Public License for more details.
-%
-%   You should have received a copy of the GNU Affero General Public License
-%   along with this program.  If not, see <http://www.gnu.org/licenses/>.
-%
-% Authors: 
-%   Ramzi Theodory and Serina Giha
+% Examples: 
+%   output = psdRead("input");
+%   output = psdRead("input.psd");
+%   output = psdRead("C:\Users\USER\Downloads\input");
+%   output = psdRead("C:\Users\USER\Downloads\input.psd");
 %
 % Last revision:
 %   14. February 2019
@@ -89,7 +74,7 @@ header.colorMode = fread(fid, 1, 'uint16');
 
 fprintf(" Done\n");
 
-%read Color Mode data, Image Resources...
+% Read Color Mode data, Image Resources...
 
 fprintf("Reading Color Mode Data...");
 
@@ -120,7 +105,8 @@ end
 fprintf(" Done\n");
 
 fprintf("Reading Layers and Masks Data...");
-%Read layers and masks....
+
+% Read layers and masks....
 layersAndMasks.length = fread(fid, 1, 'uint32');
 layersAndMasks.layerInfoLength = fread(fid, 1, 'uint32');
 layersAndMasks.layerCount = fread(fid, 1, 'uint16');
