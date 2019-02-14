@@ -11,7 +11,7 @@ Two Matlab functions which make it possible to write a layered Photoshop PSD fil
 
 - "outputFile" is the name or path of the output PSD file.
 
-This function will produce a photoshop psd file called: "output.psd" which contains the input images as layers.
+This function will produce a photoshop PSD file called: "output.psd" which contains the input images as layers.
 
 ### Examples: 
 - `psdWrite("images", "output");` or `psdWrite("images", "output.psd");` Here "images" is a folder in the current directory, and "output.psd" will also be created in the current directory.
@@ -29,16 +29,16 @@ This function will produce a photoshop psd file called: "output.psd" which conta
 
 - "outputStructure" is the name of the structure where the extracted data will be stored.
 
-This function will read the input psd file and extract the layer images and metadata into the Matlab workspace.
+This function will read the input PSD file and extract the layer images and metadata into the Matlab workspace.
 
 ### Examples: 
-- `output = psdRead("input.psd");` Here "input.psd" is a psd file in the current directory.
+- `output = psdRead("input.psd");` Here "input.psd" is a PSD file in the current directory.
 - `output = psdRead("C:\Users\USER\Downloads\input.psd");`
 
 ## Limitations:
 - Only works with 8-Bit images (if otherwise, the images are converted to 8-Bits).
-- Only works with run length encoded data in the psd file.
-- Probably many other limitations (specially when reading psd files which were not written using the psdWrite function).
+- Only works with run-length encoded data in the psd file.
+- The psdRead function is only guaranteed to work with PSD files that are produced by the psdWrite function. Many variables in the PSD file format make it difficult to read all PSD files.
 
 ## Credit:
 The psdRead function is inspired by "Adobe Photoshop PSD file reader" by "Jeff Mather", and it was extended in order to read layers.
