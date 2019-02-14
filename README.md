@@ -1,7 +1,7 @@
 # Matlab-PSD-Writer-Reader
 Two Matlab functions which make it possible to write a layered Photoshop PSD files from a folder of input images, or read a PSD file and extract the layers to the Matlab workspace.
 
-## PSD Write
+## PSD Write:
 
 ```psdWrite(inputFolder, outputFile);```
 
@@ -17,7 +17,7 @@ This function will produce a photoshop psd file called: "output.psd" which conta
 - `psdWrite("images", "output");` or `psdWrite("images", "output.psd");` Here "images" is a folder in the current directory, and "output.psd" will also be created in the current directory.
 - `psdWrite("C:\Users\USER\Downloads\images", "C:\Users\USER\Downloads\output");` or `psdWrite("C:\Users\USER\Downloads\images", "C:\Users\USER\Downloads\output.psd");`
 
-## PSD Read
+## PSD Read:
 
 ```outputStructure = psdRead(inputFile);```
 
