@@ -7,9 +7,9 @@ Two Matlab functions which make it possible to write a layered Photoshop PSD fil
 
 ### Inputs:
 
-- inputFolder is the name or path of the folder which contains the images. If name is given then folder must be located in the same directory as the function.
+- "inputFolder" is the name or path of the folder which contains the images. If name is given then folder must be located in the same directory as the function.
 
-- outputFile is the name or path of the output PSD file.
+- "outputFile" is the name or path of the output PSD file.
 
 This function will produce a photoshop psd file called: "output.psd" which contains the input images as layers.
 
@@ -23,11 +23,11 @@ This function will produce a photoshop psd file called: "output.psd" which conta
 
 ### Inputs:
 
-- inputFile is the name or path of the input PSD file.
+- "inputFile" is the name or path of the input PSD file.
 
 ### Outputs:
 
-- Name of the structure where the extracted data will be stored.
+- "outputStructure" is the name of the structure where the extracted data will be stored.
 
 This function will read the input psd file and extract the layer images and metadata into the Matlab workspace.
 
