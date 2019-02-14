@@ -70,15 +70,8 @@ header.imageResources.data = [56;66;73;77;3;237;0;0;0;0;0;16;0;72;0;0;0;1;0;1;0;
 
 % Write Header data
 
-% Check if Octave or Matlab
-if exist('OCTAVE_VERSION', 'builtin') ~= 0
-  if (length(regexp(outputFile, ".*\.psd$"))==0)
-    outputFile = strcat(outputFile, '.psd');
-  end
-else
-  if ~endsWith(outputFile, ".psd", 'IgnoreCase', true)
-    outputFile = strcat(outputFile, '.psd');
-  end
+if (length(regexp(outputFile, ".*\.psd$"))==0)
+  outputFile = strcat(outputFile, '.psd');
 end
 
 fprintf("Opening Output File...");
