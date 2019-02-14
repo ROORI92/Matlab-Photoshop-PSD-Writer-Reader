@@ -80,7 +80,7 @@ header.bitsPerSample = [0 8];
 header.colorMode = [0 3];
 header.colorModeData.length = [0 0 0 0];
 header.imageResources.length = [0 0 0 42];
-header.imageResources.data = [56;66;73;77;3;237;0;0;0;0;0;16;0;72;0;0;0;1;0;1;0;72;0;0;0;1;0;1;56;66;73;77;4;0;0;0;0;0;0;2;0;0]';
+header.imageResources.data = [56;66;73;77;3;237;0;0;0;0;0;16;0;72;0;0;0;1;0;1;0;72;0;0;0;1;0;1;56;66;73;77;4;0;0;0;0;0;0;2;0;0]'; % Don't ask I also don't know!
 
 % Write Header data
 
@@ -128,14 +128,14 @@ rectangle{i} = [0 0 0 0 0 0 0 0 getBytes(numRows(i), 4) getBytes(numColomns(i), 
 channels{i} = [0 numChannels(i)];
 channelInfo{i} = [0 0 getBytes(packedBitsLength(i)/3, 4) 0 1 getBytes(packedBitsLength(i)/3, 4) 0 2 getBytes(packedBitsLength(i)/3, 4)];
 
-%Records data size
+% Records data size
 RecordsData{i} =[rectangle{i} channels{i} channelInfo{i} constantRecordsData]; 
 RecordsDataSize(i) = length(RecordsData{i});
 end
 
-%Layers and Masks Information Section
+% Layers and Masks Information Section
 layersAndMasksLength = 4 + 2 + sum(RecordsDataSize) + LayernamesLength + sum(packedBitsLength) + 2;
-layersAndMasks.length = getBytes(layersAndMasksLength, 4);     %layerinfolength + layercountlength layer Records size + channel image data size
+layersAndMasks.length = getBytes(layersAndMasksLength, 4);     % layerinfolength + layercountlength layer Records size + channel image data size
 layersAndMasks.layerInfoLength = getBytes(layersAndMasksLength - 4 , 4) ;
 layersAndMasks.layerCount = getBytes(layerCount, 2);
 
@@ -148,7 +148,7 @@ fprintf(" Done\n");
 fprintf("Writing Layer Records...");
 
 for i = 1:layerCount
-%Layer Records Section 1
+% Layer Records Section 1
 layerRecords1.rectangle = rectangle{i};
 layerRecords1.channels = channels{i};
 layerRecords1.channelInfo = channelInfo{i};
@@ -165,7 +165,7 @@ extraDataLength = getBytes(length(layerNames{i}) + 8, 4);
     
 fwrite(fid, extraDataLength);  
 
-%Layer Records Section 2 
+% Layer Records Section 2 
 layerRecords2.layerMaskData = layerMaskData;
 layerRecords2.blendingRanges = blendingRanges;
 
@@ -189,9 +189,9 @@ fprintf(" Done\n");
 
 fprintf("Writing Base Image...");
 
-fwrite(fid, [0 0]); %compression of base image
+fwrite(fid, [0 0]); % Compression of base image
 
-fwrite(fid, getImageVector(images{1})); %base image is first image
+fwrite(fid, getImageVector(images{1})); % Base image is first image
 
 fprintf(" Done\n");
 
@@ -242,7 +242,7 @@ packedBitsLength = packedBitsLength + 2;
 packedBitsLength = packedBitsLength*3;
 end
 
-function [packedBits] = packBits(image)
+function packedBits = packBits(image)
 numRows = size(image, 1);
 numColumns = size(image, 2);
 numChannels = size(image, 3);
@@ -291,13 +291,9 @@ for i = 1: size(allVectors, 2)
     packedBits = [packedBits rle];
         
 end
-
 end
 
-
 function [layerNames, totalLength] = getLayerNames(layerCount)
-
-
 layerNames = cell(1,layerCount);
 totalLength = 0;
 
@@ -327,9 +323,7 @@ for i=1:layerCount
 end
 end
 
-
 function writeStruct(fid, struct)
-
 fields = fieldnames(struct);
 numFields = size(fields, 1);
 
@@ -344,7 +338,6 @@ for i = 1:numFields
     end
     
 end
-
 end
 
 function imageVector = getImageVector(image)
@@ -367,12 +360,9 @@ imageVector = ...
     imageGVector ...
     imageBVector ...
     ];
-
 end
 
-
 function length = getBytes(layerCount, numBytes)
-
 if numBytes == 2
     number16 = de2bi(layerCount, 16, 'left-msb');
     
