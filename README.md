@@ -32,4 +32,4 @@ This function will read the input psd file and extract the layer images and meta
 - `psdRead("C:\Users\USER\Downloads\input");` or `psdRead("C:\Users\USER\Downloads\input.psd");`
 
 ## Limitations:
-Only works with not compressed or run length encoded data in the psd file.
+Only works with uncompressed or run length encoded data in the psd file.
