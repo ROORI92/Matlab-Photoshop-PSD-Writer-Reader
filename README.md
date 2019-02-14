@@ -40,7 +40,7 @@ This function will read the input psd file and extract the layer images and meta
 - Only works with uncompressed or run length encoded data in the psd file.
 - Probably many other limitations (specially when reading psd files which were not written using the psdWrite function).
 
-## Credit
+## Credit:
 The psdRead function is based on "Adobe Photoshop PSD file reader" by "Jeff Mather", and it was extended in order to read layers.
 
 https://www.mathworks.com/matlabcentral/fileexchange/4730-adobe-photoshop-psd-file-reader
