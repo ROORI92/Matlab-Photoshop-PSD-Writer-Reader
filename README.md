@@ -38,7 +38,7 @@ This function will read the input PSD file and extract the layer images and meta
 ## Limitations:
 - Only works with 8-Bit images (if otherwise, the images are converted to 8-Bits).
 - Only works with run-length encoded data in the psd file.
-- The "psdRead" function is only guaranteed to work with PSD files that are produced by the "psdWrite" function. Many variables in the PSD file format make it difficult to read all PSD files.
+- The "psdRead" function is only intended to work with PSD files that are produced by the "psdWrite" function. Many variables in the PSD file format make it difficult to read all PSD files.
 
 ## Credit:
 The psdRead function is inspired by "Adobe Photoshop PSD file reader" by "Jeff Mather", and it was extended in order to read layers.
