@@ -57,6 +57,12 @@ header.numSamples = fread(fid, 1, 'uint16');
 header.rows = fread(fid, 1, 'uint32');
 header.columns = fread(fid, 1, 'uint32');
 header.bitsPerSample = fread(fid, 1, 'uint16');
+
+if (header.bitsPerSample ~= 8)
+    fclose(fid);
+    error('Unsupported number of bits per sample (%d).', header.bitsPerSample);
+end
+
 header.colorMode = fread(fid, 1, 'uint16');
 
 fprintf(" Done\n");
