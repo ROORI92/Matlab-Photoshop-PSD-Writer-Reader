@@ -42,6 +42,8 @@ function outputStructure = psdRead(inputFile)
 %
 %---------------------------------- Begin Code ---------------------------------
 
+tic;
+
 % Check if Octave or Matlab
 if exist('OCTAVE_VERSION', 'builtin') ~= 0
   if (length(regexp(inputFile, ".*\.psd$"))==0)
@@ -55,7 +57,13 @@ end
 
 % Open the file (ieee big-endian ordering)
 
+fprintf("Opening Input File...");
+
 fid = fopen(inputFile, 'r', 'ieee-be');
+
+fprintf(" Done\n");
+
+fprintf("Reading Header Information...");
 
 header.FormatSignature= fread(fid, 4, 'uint8=>char');
 
@@ -68,7 +76,7 @@ header.FormatVersion = fread(fid, 1, 'uint16');
 
 if (header.FormatVersion ~= 1)
     fclose(fid);
-    error('Bad PSD version number (%d).',header.FormatVersion)
+    error('Bad PSD version number (%d).', header.FormatVersion)
 end
 
 fseek(fid, 6, 'cof');
@@ -79,7 +87,11 @@ header.columns = fread(fid, 1, 'uint32');
 header.bitsPerSample = fread(fid, 1, 'uint16');
 header.colorMode = fread(fid, 1, 'uint16');
 
+fprintf(" Done\n");
+
 %read Color Mode data, Image Resources...
+
+fprintf("Reading Color Mode Data...");
 
 blockLength = fread(fid, 1, 'uint32');
 
@@ -91,6 +103,10 @@ else
     header.colorModeData.data = [];
 end
 
+fprintf(" Done\n");
+
+fprintf("Reading Image Resources...");
+
 blockLength = fread(fid, 1, 'uint32');
 
 header.imageResources.length = blockLength;
@@ -101,6 +117,9 @@ else
     header.imageResources.data = [];
 end
 
+fprintf(" Done\n");
+
+fprintf("Reading Layers and Masks Data...");
 %Read layers and masks....
 layersAndMasks.length = fread(fid, 1, 'uint32');
 layersAndMasks.layerInfoLength = fread(fid, 1, 'uint32');
@@ -110,7 +129,8 @@ layerCount = layersAndMasks.layerCount;
 
 for i = 1:layerCount
     layer = ['layer' num2str(i)];
-    layersAndMasks.(layer).layerRecords.rectangle = fread(fid, 4, 'uint32');
+    rectangles{i} = fread(fid, 4, 'uint32');
+    layersAndMasks.(layer).layerRecords.rectangle = rectangles{i};
     layersAndMasks.(layer).layerRecords.numChannels = fread(fid, 1, 'uint16');
     
     numChannels = layersAndMasks.(layer).layerRecords.numChannels;
@@ -129,7 +149,11 @@ for i = 1:layerCount
     fseek(fid, extraDataLength, 'cof'); %skip extra data
 end
 
+fprintf(" Done\n");
+
 compression = fread(fid, 1, 'uint16');
+
+fprintf("Reading Layers...");
 
 %Reading the layers
 layerImages = cell(1, layerCount);
@@ -137,18 +161,21 @@ layerImages = cell(1, layerCount);
 tempImg = cell(1, header.numSamples);
 
 for i = 1:layerCount
-    tempImg{1} = uint8(zeros(header.columns, header.rows));
-    tempImg{2} = uint8(zeros(header.columns, header.rows));
-    tempImg{3} = uint8(zeros(header.columns, header.rows));
+    currentRows = rectangles{i}(3);
+    currentColumns = rectangles{i}(4);
+ 
+    tempImg{1} = uint8(zeros(currentColumns, currentRows));
+    tempImg{2} = uint8(zeros(currentColumns, currentRows));
+    tempImg{3} = uint8(zeros(currentColumns, currentRows));
     
-    finalImg = uint8(zeros(header.columns, header.rows, header.numSamples));
+    finalImg = uint8(zeros(currentColumns, currentRows, header.numSamples));
     
     for j = 1: header.numSamples
-        scanlineLengths = fread(fid, header.rows, 'uint16');
+        scanlineLengths = fread(fid, currentRows, 'uint16');
         
         for p = 1:numel(scanlineLengths)
-            idx = (p - 1) * header.columns + 1;
-            tempImg{j}(idx:(idx + header.columns - 1)) = decodeScanline(fid, scanlineLengths(p), header);
+            idx = (p - 1) * currentColumns + 1;
+            tempImg{j}(idx:(idx + currentColumns - 1)) = decodeScanline(fid, scanlineLengths(p), currentColumns);
         end
         
         fseek(fid, 2 , 'cof'); 
@@ -158,22 +185,32 @@ for i = 1:layerCount
     finalImg(:, :, 2) = tempImg{2};
     finalImg(:, :, 3) = tempImg{3};
     
-    finalImg = reshape(finalImg, [header.columns, header.rows, header.numSamples]);
+    finalImg = reshape(finalImg, [currentColumns, currentRows, header.numSamples]);
     finalImg = permute(finalImg, [2 1 3]);
     
     layerImages{i} = finalImg;
 end
 
+fprintf(" Done\n");
+
+fprintf("Arranging Data in Output Structure...");
+
 outputStructure.metadata.header = header;
 outputStructure.metadata.layersInformation = layersAndMasks;
 outputStructure.layerImages = layerImages;
 
+fprintf(" Done\n");
+
 fclose(fid);
+
+fprintf("Read Successful! Elapsed Time: ");
+fprintf(num2str(toc));
+fprintf(" seconds\n");
 end
 
-function buffer = decodeScanline(fid, scanlineLength, metadata)
+function buffer = decodeScanline(fid, scanlineLength, currentColumns)
 %READRLE  Read and decode an RLE scanline.
-buffer(metadata.columns, 1) = uint8(0);
+buffer(currentColumns, 1) = uint8(0);
 count = 1;
 
 fpos = ftell(fid);
