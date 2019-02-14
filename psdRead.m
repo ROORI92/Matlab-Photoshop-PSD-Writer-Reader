@@ -17,9 +17,7 @@ function outputStructure = psdRead(inputFile)
 %   outputStructure - Structure where metadata and layers are stored
 %
 % Examples: 
-%   output = psdRead("input");
 %   output = psdRead("input.psd");
-%   output = psdRead("C:\Users\USER\Downloads\input");
 %   output = psdRead("C:\Users\USER\Downloads\input.psd");
 %
 % Last revision:
@@ -28,17 +26,6 @@ function outputStructure = psdRead(inputFile)
 %---------------------------------- Begin Code ---------------------------------
 
 tic;
-
-% Check if Octave or Matlab
-if exist('OCTAVE_VERSION', 'builtin') ~= 0
-  if (length(regexp(inputFile, ".*\.psd$"))==0)
-    inputFile = strcat(inputFile, '.psd');
-  end
-else
-  if ~endsWith(inputFile, '.psd', 'IgnoreCase', true)
-    inputFile = strcat(inputFile, '.psd');
-  end
-end
 
 % Open the file (ieee big-endian ordering)
 
