@@ -48,7 +48,7 @@ header.FormatVersion = fread(fid, 1, 'uint16');
 
 if (header.FormatVersion ~= 1)
     fclose(fid);
-    error('Bad PSD version number (%d).', header.FormatVersion)
+    error('Bad PSD version number (%d).', header.FormatVersion);
 end
 
 fseek(fid, 6, 'cof');
@@ -125,6 +125,11 @@ end
 fprintf(" Done\n");
 
 compression = fread(fid, 1, 'uint16');
+
+if (compression ~= 1)
+    fclose(fid);
+    error('Unsupported Compression Format (%d).', compression);
+end
 
 fprintf("Reading Layers...");
 
