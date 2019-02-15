@@ -40,9 +40,9 @@ This function will read the input PSD file and extract the layer images and meta
 - `output = psdRead("C:\Users\USER\Downloads\input.psd");`
 
 ## Limitations:
-- Only works with 8-Bit images (if otherwise, the images are converted to 8-Bits).
-- Only works with run-length encoded data in the PSD file.
-- The "psdRead" function is only intended to work with PSD files that are produced by the "psdWrite" function. Many variables in the PSD file format make it difficult to read all PSD files (but feel free to try!).
+- Only works with 8-Bit images (for now), if otherwise, the images are converted to 8-Bits.
+- Only works with run-length encoded data in the PSD file (for now). 
+- The "psdRead" function is only intended to work with PSD files that are produced by the "psdWrite" function. Many variables (for example compression schemes) in the PSD file format make it difficult to read all PSD files, but feel free to try!.
 
 ## Acknowledgements:
 The psdRead function is inspired by "Adobe Photoshop PSD file reader" by "Jeff Mather", and it was extended in order to read layers.
