@@ -11,7 +11,7 @@ The two functions should also work with GNU Octave.
 
 ### Inputs:
 
-- "inputFolder" is the name or path of the folder which contains the images. If name is given then folder must be located in the same directory as the function.
+- "inputFolder" is the name or path of the folder which contains the images. If name is given then folder must be located in the same directory as the function. The function takes only JPEG's and/or PNG's from the input folder.
 
 - "outputFile" is the name or path of the output PSD file.
 
