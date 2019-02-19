@@ -38,6 +38,7 @@ closeFile(data);
 fprintf("Write Successful! Elapsed Time: %d seconds\n", toc);
 end
 
+
 function closeFile(data)
 fid = data.fid;
 fprintf("Closing and Saving Output File...");

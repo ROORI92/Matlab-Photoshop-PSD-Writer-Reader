@@ -34,6 +34,7 @@ fclose(data.fid);
 fprintf("Read Successful! Elapsed Time: %d seconds\n", toc);
 end
 
+
 function outputStructure = getOutputStructure(data)
 header = data.header;
 layersAndMasks = data.layersAndMasks;
