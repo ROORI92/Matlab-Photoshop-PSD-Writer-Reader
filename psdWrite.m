@@ -43,8 +43,8 @@ for i = 1:numFiles
     currentImage = imread(currentFileName);
     images{i} = im2uint8(currentImage); 
     numRows(i) = size(images{i}, 1);
-    numColomns(i) = size(images{i}, 2);
-    resolution(i) = numRows(i)*numColomns(i);
+    numColumns(i) = size(images{i}, 2);
+    resolution(i) = numRows(i)*numColumns(i);
     numChannels(i) = size(images{i}, 3);
     packedBitsLength(i) = getPackedBitsLength(images{i});
 end
@@ -61,7 +61,7 @@ header.formatVersion = [0 1];
 header.reserved = [0 0 0 0 0 0];
 header.numSamples = [0 numChannels(1)];
 header.rows = getBytes(max(numRows), 4);
-header.columns = getBytes(max(numColomns), 4);
+header.columns = getBytes(max(numColumns), 4);
 header.bitsPerSample = [0 8];
 header.colorMode = [0 3];
 header.colorModeData.length = [0 0 0 0];
@@ -103,7 +103,7 @@ compression = [0 1];
 constantRecordsData = [blendSig blendKey opacity clipping flags filler extraDataLength layerMaskData blendingRanges];
 
 for i = 1:layerCount
-rectangle{i} = [0 0 0 0 0 0 0 0 getBytes(numRows(i), 4) getBytes(numColomns(i), 4)];
+rectangle{i} = [0 0 0 0 0 0 0 0 getBytes(numRows(i), 4) getBytes(numColumns(i), 4)];
 channels{i} = [0 numChannels(i)];
 channelInfo{i} = [0 0 getBytes(packedBitsLength(i)/3, 4) 0 1 getBytes(packedBitsLength(i)/3, 4) 0 2 getBytes(packedBitsLength(i)/3, 4)];
 
@@ -166,11 +166,13 @@ end
 
 fprintf(" Done\n");
 
-fprintf("Writing Base Image...");
+fprintf("Writing Composite Image...");
 
-fwrite(fid, [0 0]); % Compression of base image
+fwrite(fid, [0 0]); % Compression of composite image
 
-fwrite(fid, getImageVector(images{1})); % Base image is first image
+compositeImage = getCompositeImage(images, max(numRows), max(numColumns), 3);
+
+fwrite(fid, getImageVector(compositeImage));
 
 fprintf(" Done\n");
 
@@ -184,7 +186,6 @@ fprintf("Write Successful! Elapsed Time: ");
 fprintf(num2str(toc));
 fprintf(" seconds\n");
 end
-
 
 function structSize = getSizeOfStruct(struct)
 
@@ -205,6 +206,13 @@ for i = 1:numFields
     
 end
 
+end
+
+function compositeImage = getCompositeImage(images, numRows, numColumns, numChannels)
+ compositeImage = uint8(zeros(numRows, numColumns, numChannels));
+ for i = 1:length(images)
+  compositeImage(1:size(images{i}, 1), 1:size(images{i}, 2), 1:size(images{i}, 3)) = images{i};
+ end
 end
 
 function packedBitsLength = getPackedBitsLength(image) 

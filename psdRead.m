@@ -177,11 +177,19 @@ end
 
 fprintf(" Done\n");
 
+fprintf("Reading Composite Image...");
+
+compositeImage = readCompositeImage(fid, header);
+
+fprintf(" Done\n");
+
+
 fprintf("Arranging Data in Output Structure...");
 
 outputStructure.metadata.header = header;
 outputStructure.metadata.layersInformation = layersAndMasks;
 outputStructure.layerImages = layerImages;
+outputStructure.compositeImage = compositeImage;
 
 fprintf(" Done\n");
 
@@ -190,6 +198,46 @@ fclose(fid);
 fprintf("Read Successful! Elapsed Time: ");
 fprintf(num2str(toc));
 fprintf(" seconds\n");
+end
+
+function compositeImage = readCompositeImage(fid, header)
+compression = fread(fid, 1, 'uint16');
+
+ if (compression)
+    
+    if (header.bitsPerSample == 1)
+        
+        compositeImage(header.columns, header.rows, header.numSamples) = logical(0);
+        
+    elseif (header.bitsPerSample == 8)
+        
+        compositeImage(header.columns, header.rows, header.numSamples) = uint8(0);
+        
+    elseif (header.bitsPerSample == 16)
+        
+        compositeImage(header.columns, header.rows, header.numSamples) = uint16(0);
+        
+    end
+        
+    % Read compressed data.
+    scanlineLengths = fread(fid, header.rows * header.numSamples, 'uint16');
+    
+    for p = 1:numel(scanlineLengths)
+        
+        idx = (p - 1) * header.columns + 1;
+        X(idx:(idx + header.columns - 1)) = decodeScanline(fid, scanlineLengths(p), header.columns);
+        
+    end
+   
+else
+    
+    % Read the uncompressed pixels.
+    numPixels = header.numSamples * header.rows * header.columns;
+    compositeImage = fread(fid, numPixels, sprintf('*uint%d', header.bitsPerSample));
+end
+% Reshape the pixels.
+compositeImage = reshape(compositeImage, [header.columns, header.rows, header.numSamples]);
+compositeImage = permute(compositeImage, [2 1 3]);
 end
 
 function buffer = decodeScanline(fid, scanlineLength, currentColumns)
