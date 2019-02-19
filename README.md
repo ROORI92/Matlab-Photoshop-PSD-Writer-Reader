@@ -33,7 +33,7 @@ This function will produce a photoshop PSD file called: "output.psd" which conta
 
 - "outputStructure" is the name of the structure where the extracted data will be stored.
 
-This function will read the input PSD file and extract the layer images and metadata into the Matlab workspace.
+This function will read the input PSD file and extract the layer images, composite image and metadata into the Matlab workspace.
 
 ### Examples: 
 - `output = psdRead("input.psd");` Here "input.psd" is a PSD file in the current directory.
