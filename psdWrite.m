@@ -41,7 +41,7 @@ for i = 1:numFiles
     currentFileName = imageFiles(i).name;
     currentImage = imread(currentFileName);
     if (size(currentImage, 3) ~= 3)
-     continue;
+     error('Only Images with 3 Channels are Supported (%s)', currentFileName);
     end
     images{i} = im2uint8(currentImage); 
     numRows(i) = size(images{i}, 1);
