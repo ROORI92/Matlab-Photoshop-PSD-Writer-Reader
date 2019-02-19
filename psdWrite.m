@@ -27,66 +27,67 @@ function psdWrite(inputFolder, outputFile)
 
 tic;
 
-fprintf("Processing Input Images...");
+data = getImages(inputFolder);
+data.fid = openFile(outputFile);
+writeHeader(data);
+writeLayersInfo(data);
+writeLayerImages(data);
+writeCompositeImage(data);
+closeFile(data);
 
-startFolder = cd (inputFolder);
+fprintf("Write Successful! Elapsed Time: %d seconds\n", toc);
+end
 
-imageFiles = [dir('*.jpeg'); dir('*.jpg'); dir('*.png')];
+function closeFile(data)
+fid = data.fid;
+fprintf("Closing and Saving Output File...");
+fclose(fid);
+fprintf(" Done\n");
+end
 
-numFiles = length(imageFiles);
+function writeCompositeImage(data)
+fid = data.fid;
+numRows = data.numRows;
+numColumns = data.numColumns;
+numChannels = data.numChannels;
+images = data.images;
 
-numChannels = 3;
+fprintf("Writing Composite Image...");
 
-for i = 1:numFiles
-    currentFileName = imageFiles(i).name;
-    currentImage = imread(currentFileName);
-    if (size(currentImage, 3) ~= 3)
-     error('Only Images with 3 Channels are Supported (%s)', currentFileName);
-    end
-    images{i} = im2uint8(currentImage); 
-    numRows(i) = size(images{i}, 1);
-    numColumns(i) = size(images{i}, 2);
-    resolution(i) = numRows(i)*numColumns(i);
-    packedBitsLength(i) = getPackedBitsLength(images{i});
+fwrite(fid, [0 0]); % Compression of composite image
+
+compositeImage = getCompositeImage(images, max(numRows), max(numColumns), numChannels);
+
+fwrite(fid, getImageVector(compositeImage));
+
+fprintf(" Done\n");
+end
+
+function writeLayerImages(data)
+fid = data.fid;
+images = data.images;
+layerCount = data.layerCount;
+
+compression = [0 1];
+
+fprintf("Writing Layers...");
+
+fwrite(fid, compression);
+
+for i = 1:layerCount
+    fwrite(fid, packBits(images{i}));
 end
 
 fprintf(" Done\n");
-
-layerCount = size(images, 2);
-
-cd (startFolder);
-
-% Header Data
-header.formatSignature = uint8('8BPS');
-header.formatVersion = [0 1];
-header.reserved = [0 0 0 0 0 0];
-header.numSamples = [0 numChannels];
-header.rows = getBytes(max(numRows), 4);
-header.columns = getBytes(max(numColumns), 4);
-header.bitsPerSample = [0 8];
-header.colorMode = [0 3];
-header.colorModeData.length = [0 0 0 0];
-header.imageResources.length = [0 0 0 42];
-header.imageResources.data = [56;66;73;77;3;237;0;0;0;0;0;16;0;72;0;0;0;1;0;1;0;72;0;0;0;1;0;1;56;66;73;77;4;0;0;0;0;0;0;2;0;0]'; % Don't ask I also don't know!
-
-% Write Header data
-
-if (length(regexp(outputFile, ".*\.psd$"))==0)
-  outputFile = strcat(outputFile, '.psd');
 end
 
-fprintf("Opening Output File...");
-
-fid = fopen(outputFile, 'w');
-
-fprintf(" Done\n");
-
-fprintf("Writing Header...");
-
-writeStruct(fid, header);
-
-fprintf(" Done\n");
-
+function writeLayersInfo(data)
+layerCount = data.layerCount;
+numRows = data.numRows;
+numColumns = data.numColumns;
+packedBitsLength = data.packedBitsLength;
+numChannels = data.numChannels;
+fid = data.fid;
 [layerNames, LayernamesLength] = getLayerNames(layerCount); 
 
 % Layer Records data
@@ -99,7 +100,6 @@ filler = 0;
 extraDataLength = [0 0 0 0]; 
 layerMaskData = [0 0 0 0];
 blendingRanges = [0 0 0 0];
-compression = [0 1];
 
 constantRecordsData = [blendSig blendKey opacity clipping flags filler extraDataLength layerMaskData blendingRanges];
 
@@ -156,36 +156,77 @@ fwrite(fid, layerName);
 end
 
 fprintf(" Done\n");
+end
 
-fprintf("Writing Layers...");
+function writeHeader(data)
+numChannels = data.numChannels;
+numRows = data.numRows;
+numColumns = data.numColumns;
+fid = data.fid;
 
-fwrite(fid, compression);
+% Header Data
+header.formatSignature = uint8('8BPS');
+header.formatVersion = [0 1];
+header.reserved = [0 0 0 0 0 0];
+header.numSamples = [0 numChannels];
+header.rows = getBytes(max(numRows), 4);
+header.columns = getBytes(max(numColumns), 4);
+header.bitsPerSample = [0 8];
+header.colorMode = [0 3];
+header.colorModeData.length = [0 0 0 0];
+header.imageResources.length = [0 0 0 42];
+header.imageResources.data = [56;66;73;77;3;237;0;0;0;0;0;16;0;72;0;0;0;1;0;1;0;72;0;0;0;1;0;1;56;66;73;77;4;0;0;0;0;0;0;2;0;0]'; % Don't ask I also don't know!
 
-for i = 1:layerCount
-    fwrite(fid, packBits(images{i}));
+% Write Header data
+fprintf("Writing Header...");
+writeStruct(fid, header);
+fprintf(" Done\n");
+end
+
+function fid = openFile(outputFile)
+if (length(regexp(outputFile, ".*\.psd$"))==0)
+  outputFile = strcat(outputFile, '.psd');
+end
+fprintf("Opening Output File...");
+fid = fopen(outputFile, 'w');
+fprintf(" Done\n");
+end
+
+function data = getImages(inputFolder)
+fprintf("Processing Input Images...");
+
+startFolder = cd (inputFolder);
+
+imageFiles = [dir('*.jpeg'); dir('*.jpg'); dir('*.png')];
+
+numFiles = length(imageFiles);
+
+numChannels = 3;
+
+for i = 1:numFiles
+    currentFileName = imageFiles(i).name;
+    currentImage = imread(currentFileName);
+    if (size(currentImage, 3) ~= 3)
+     error('Only Images with 3 Channels are Supported (%s)', currentFileName);
+    end
+    images{i} = im2uint8(currentImage); 
+    numRows(i) = size(images{i}, 1);
+    numColumns(i) = size(images{i}, 2);
+    packedBitsLength(i) = getPackedBitsLength(images{i});
 end
 
 fprintf(" Done\n");
 
-fprintf("Writing Composite Image...");
+layerCount = size(images, 2);
 
-fwrite(fid, [0 0]); % Compression of composite image
+cd (startFolder);
 
-compositeImage = getCompositeImage(images, max(numRows), max(numColumns), numChannels);
-
-fwrite(fid, getImageVector(compositeImage));
-
-fprintf(" Done\n");
-
-fprintf("Closing and Saving Output File...");
-
-fclose(fid);
-
-fprintf(" Done\n");
-
-fprintf("Write Successful! Elapsed Time: ");
-fprintf(num2str(toc));
-fprintf(" seconds\n");
+data.images = images;
+data.numRows = numRows;
+data.numColumns = numColumns;
+data.numChannels = numChannels;
+data.packedBitsLength = packedBitsLength;
+data.layerCount = layerCount;
 end
 
 function structSize = getSizeOfStruct(struct)
