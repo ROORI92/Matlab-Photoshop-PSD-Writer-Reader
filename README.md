@@ -43,6 +43,7 @@ This function will read the input PSD file and extract the layer images and meta
 - Only works with 8-Bit images (for now), if otherwise, the images are converted to 8-Bits.
 - Only works with images what have 3 color channels (for now).
 - Only works with run-length encoded data in the PSD file (for now). 
+- Masks are read but not decoded in the read function (for now).
 - The "psdRead" function is only intended to work with PSD files that are produced by the "psdWrite" function. Many variables (for example compression schemes) in the PSD file format make it difficult to read all PSD files (but feel free to try!).
 
 ## Acknowledgements:
