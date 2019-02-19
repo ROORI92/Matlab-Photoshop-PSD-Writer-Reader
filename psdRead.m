@@ -23,14 +23,141 @@ function outputStructure = psdRead(inputFile)
 %---------------------------------- Begin Code ---------------------------------
 
 tic;
+data.fid = openFile(inputFile);
+data = readHeader(data);
+data = readLayerInfo(data);
+data = readLayerImages(data);
+data = readCompositeImage(data);
+outputStructure = getOutputStructure(data);
+fclose(data.fid);
 
-% Open the file (ieee big-endian ordering)
+fprintf("Read Successful! Elapsed Time: %d seconds\n", toc);
+end
 
-fprintf("Opening Input File...");
+function outputStructure = getOutputStructure(data)
+header = data.header;
+layersAndMasks = data.layersAndMasks;
+layerImages = data.layerImages;
+compositeImage = data.compositeImage; 
 
-fid = fopen(inputFile, 'r', 'ieee-be');
+fprintf("Arranging Data in Output Structure...");
+outputStructure.metadata.header = header;
+outputStructure.metadata.layersInformation = layersAndMasks;
+outputStructure.layerImages = layerImages;
+outputStructure.compositeImage = compositeImage;
 
 fprintf(" Done\n");
+end
+
+function data = readCompositeImage(data)
+fid = data.fid;
+header = data.header;
+
+fprintf("Reading Composite Image...");
+compositeImage = decodeCompositeImage(fid, header);
+fprintf(" Done\n");
+
+data.compositeImage = compositeImage;
+end
+
+function data = readLayerImages(data)
+fid = data.fid;
+layerCount = data.layerCount;
+header = data.header;
+rectangles = data.rectangles;
+
+compression = fread(fid, 1, 'uint16');
+
+if (compression ~= 1)
+    fclose(fid);
+    error('Unsupported Compression Format (%d).', compression);
+end
+
+fprintf("Reading Layers...");
+
+%Reading the layers
+layerImages = cell(1, layerCount);
+
+tempImg = cell(1, header.numSamples);
+
+for i = 1:layerCount
+    currentRows = rectangles{i}(3);
+    currentColumns = rectangles{i}(4);
+ 
+    tempImg{1} = uint8(zeros(currentColumns, currentRows));
+    tempImg{2} = uint8(zeros(currentColumns, currentRows));
+    tempImg{3} = uint8(zeros(currentColumns, currentRows));
+    
+    finalImg = uint8(zeros(currentColumns, currentRows, header.numSamples));
+    
+    for j = 1: header.numSamples
+        scanlineLengths = fread(fid, currentRows, 'uint16');
+        
+        for p = 1:numel(scanlineLengths)
+            idx = (p - 1) * currentColumns + 1;
+            tempImg{j}(idx:(idx + currentColumns - 1)) = decodeScanline(fid, scanlineLengths(p), currentColumns);
+        end
+        
+        fseek(fid, 2 , 'cof'); 
+    end
+    
+    finalImg(:, :, 1) = tempImg{1};
+    finalImg(:, :, 2) = tempImg{2};
+    finalImg(:, :, 3) = tempImg{3};
+    
+    finalImg = reshape(finalImg, [currentColumns, currentRows, header.numSamples]);
+    finalImg = permute(finalImg, [2 1 3]);
+    
+    layerImages{i} = finalImg;
+end
+
+data.layerImages = layerImages;
+
+fprintf(" Done\n");
+end
+
+function data = readLayerInfo(data)
+fid = data.fid;
+fprintf("Reading Layers and Masks Data...");
+
+% Read layers and masks....
+layersAndMasks.length = fread(fid, 1, 'uint32');
+layersAndMasks.layerInfoLength = fread(fid, 1, 'uint32');
+layersAndMasks.layerCount = fread(fid, 1, 'uint16');
+
+layerCount = layersAndMasks.layerCount;
+
+for i = 1:layerCount
+    layer = ['layer' num2str(i)];
+    rectangles{i} = fread(fid, 4, 'uint32');
+    layersAndMasks.(layer).layerRecords.rectangle = rectangles{i};
+    layersAndMasks.(layer).layerRecords.numChannels = fread(fid, 1, 'uint16');
+    
+    numChannels = layersAndMasks.(layer).layerRecords.numChannels;
+    
+    layersAndMasks.(layer).layerRecords.channelInfo = fread(fid, 6*numChannels , 'uint8');      % might be changed (6 *numof Channels)
+    layersAndMasks.(layer).layerRecords.blendSig = fread(fid, 4, 'uint8=>char');
+    layersAndMasks.(layer).layerRecords.blendKey = fread(fid, 4, 'uint8=>char');
+    layersAndMasks.(layer).layerRecords.opacity = fread(fid, 1, 'uint8');
+    layersAndMasks.(layer).layerRecords.clipping = fread(fid, 1, 'uint8');
+    layersAndMasks.(layer).layerRecords.flags = fread(fid, 1, 'uint8');
+    layersAndMasks.(layer).layerRecords.filler = fread(fid, 1, 'uint8');
+    layersAndMasks.(layer).layerRecords.extraDataLength = fread(fid, 1, 'uint32');
+    
+    extraDataLength = layersAndMasks.(layer).layerRecords.extraDataLength;
+        
+    fseek(fid, extraDataLength, 'cof'); %skip extra data
+end
+
+data.rectangles = rectangles;
+data.layersAndMasks = layersAndMasks;
+data.layerCount = layerCount;
+
+fprintf(" Done\n"); 
+end
+
+function data = readHeader(data)
+fid = data.fid;
 
 fprintf("Reading Header Information...");
 
@@ -94,110 +221,20 @@ end
 
 fprintf(" Done\n");
 
-fprintf("Reading Layers and Masks Data...");
-
-% Read layers and masks....
-layersAndMasks.length = fread(fid, 1, 'uint32');
-layersAndMasks.layerInfoLength = fread(fid, 1, 'uint32');
-layersAndMasks.layerCount = fread(fid, 1, 'uint16');
-
-layerCount = layersAndMasks.layerCount;
-
-for i = 1:layerCount
-    layer = ['layer' num2str(i)];
-    rectangles{i} = fread(fid, 4, 'uint32');
-    layersAndMasks.(layer).layerRecords.rectangle = rectangles{i};
-    layersAndMasks.(layer).layerRecords.numChannels = fread(fid, 1, 'uint16');
-    
-    numChannels = layersAndMasks.(layer).layerRecords.numChannels;
-    
-    layersAndMasks.(layer).layerRecords.channelInfo = fread(fid, 6*numChannels , 'uint8');      % might be changed (6 *numof Channels)
-    layersAndMasks.(layer).layerRecords.blendSig = fread(fid, 4, 'uint8=>char');
-    layersAndMasks.(layer).layerRecords.blendKey = fread(fid, 4, 'uint8=>char');
-    layersAndMasks.(layer).layerRecords.opacity = fread(fid, 1, 'uint8');
-    layersAndMasks.(layer).layerRecords.clipping = fread(fid, 1, 'uint8');
-    layersAndMasks.(layer).layerRecords.flags = fread(fid, 1, 'uint8');
-    layersAndMasks.(layer).layerRecords.filler = fread(fid, 1, 'uint8');
-    layersAndMasks.(layer).layerRecords.extraDataLength = fread(fid, 1, 'uint32');
-    
-    extraDataLength = layersAndMasks.(layer).layerRecords.extraDataLength;
-        
-    fseek(fid, extraDataLength, 'cof'); %skip extra data
+data.header = header;
 end
 
+function fid = openFile(inputFile)
+% Open the file (ieee big-endian ordering)
+
+fprintf("Opening Input File...");
+
+fid = fopen(inputFile, 'r', 'ieee-be');
+
 fprintf(" Done\n");
-
-compression = fread(fid, 1, 'uint16');
-
-if (compression ~= 1)
-    fclose(fid);
-    error('Unsupported Compression Format (%d).', compression);
 end
 
-fprintf("Reading Layers...");
-
-%Reading the layers
-layerImages = cell(1, layerCount);
-
-tempImg = cell(1, header.numSamples);
-
-for i = 1:layerCount
-    currentRows = rectangles{i}(3);
-    currentColumns = rectangles{i}(4);
- 
-    tempImg{1} = uint8(zeros(currentColumns, currentRows));
-    tempImg{2} = uint8(zeros(currentColumns, currentRows));
-    tempImg{3} = uint8(zeros(currentColumns, currentRows));
-    
-    finalImg = uint8(zeros(currentColumns, currentRows, header.numSamples));
-    
-    for j = 1: header.numSamples
-        scanlineLengths = fread(fid, currentRows, 'uint16');
-        
-        for p = 1:numel(scanlineLengths)
-            idx = (p - 1) * currentColumns + 1;
-            tempImg{j}(idx:(idx + currentColumns - 1)) = decodeScanline(fid, scanlineLengths(p), currentColumns);
-        end
-        
-        fseek(fid, 2 , 'cof'); 
-    end
-    
-    finalImg(:, :, 1) = tempImg{1};
-    finalImg(:, :, 2) = tempImg{2};
-    finalImg(:, :, 3) = tempImg{3};
-    
-    finalImg = reshape(finalImg, [currentColumns, currentRows, header.numSamples]);
-    finalImg = permute(finalImg, [2 1 3]);
-    
-    layerImages{i} = finalImg;
-end
-
-fprintf(" Done\n");
-
-fprintf("Reading Composite Image...");
-
-compositeImage = readCompositeImage(fid, header);
-
-fprintf(" Done\n");
-
-
-fprintf("Arranging Data in Output Structure...");
-
-outputStructure.metadata.header = header;
-outputStructure.metadata.layersInformation = layersAndMasks;
-outputStructure.layerImages = layerImages;
-outputStructure.compositeImage = compositeImage;
-
-fprintf(" Done\n");
-
-fclose(fid);
-
-fprintf("Read Successful! Elapsed Time: ");
-fprintf(num2str(toc));
-fprintf(" seconds\n");
-end
-
-function compositeImage = readCompositeImage(fid, header)
+function compositeImage = decodeCompositeImage(fid, header)
 compression = fread(fid, 1, 'uint16');
 
  if (compression)

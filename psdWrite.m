@@ -30,7 +30,7 @@ tic;
 data = getImages(inputFolder);
 data.fid = openFile(outputFile);
 writeHeader(data);
-writeLayersInfo(data);
+writeLayerInfo(data);
 writeLayerImages(data);
 writeCompositeImage(data);
 closeFile(data);
@@ -81,7 +81,7 @@ end
 fprintf(" Done\n");
 end
 
-function writeLayersInfo(data)
+function writeLayerInfo(data)
 layerCount = data.layerCount;
 numRows = data.numRows;
 numColumns = data.numColumns;
