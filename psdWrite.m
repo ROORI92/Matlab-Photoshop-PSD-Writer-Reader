@@ -35,14 +35,18 @@ imageFiles = [dir('*.jpeg'); dir('*.jpg'); dir('*.png')];
 
 numFiles = length(imageFiles);
 
+numChannels = 3;
+
 for i = 1:numFiles
     currentFileName = imageFiles(i).name;
     currentImage = imread(currentFileName);
+    if (size(currentImage, 3) ~= 3)
+     continue;
+    end
     images{i} = im2uint8(currentImage); 
     numRows(i) = size(images{i}, 1);
     numColumns(i) = size(images{i}, 2);
     resolution(i) = numRows(i)*numColumns(i);
-    numChannels(i) = size(images{i}, 3);
     packedBitsLength(i) = getPackedBitsLength(images{i});
 end
 
@@ -56,7 +60,7 @@ cd (startFolder);
 header.formatSignature = uint8('8BPS');
 header.formatVersion = [0 1];
 header.reserved = [0 0 0 0 0 0];
-header.numSamples = [0 numChannels(1)];
+header.numSamples = [0 numChannels];
 header.rows = getBytes(max(numRows), 4);
 header.columns = getBytes(max(numColumns), 4);
 header.bitsPerSample = [0 8];
@@ -101,7 +105,7 @@ constantRecordsData = [blendSig blendKey opacity clipping flags filler extraData
 
 for i = 1:layerCount
 rectangle{i} = [0 0 0 0 0 0 0 0 getBytes(numRows(i), 4) getBytes(numColumns(i), 4)];
-channels{i} = [0 numChannels(i)];
+channels{i} = [0 numChannels];
 channelInfo{i} = [0 0 getBytes(packedBitsLength(i)/3, 4) 0 1 getBytes(packedBitsLength(i)/3, 4) 0 2 getBytes(packedBitsLength(i)/3, 4)];
 
 % Records data size
@@ -167,7 +171,7 @@ fprintf("Writing Composite Image...");
 
 fwrite(fid, [0 0]); % Compression of composite image
 
-compositeImage = getCompositeImage(images, max(numRows), max(numColumns), 3);
+compositeImage = getCompositeImage(images, max(numRows), max(numColumns), numChannels);
 
 fwrite(fid, getImageVector(compositeImage));
 
@@ -206,7 +210,7 @@ end
 end
 
 function compositeImage = getCompositeImage(images, numRows, numColumns, numChannels)
- compositeImage = uint8(zeros(numRows, numColumns, numChannels));
+ compositeImage = uint8(zeros(numRows, numColumns, numChannels)) + 255;
  for i = 1:length(images)
   compositeImage(1:size(images{i}, 1), 1:size(images{i}, 2), 1:size(images{i}, 3)) = images{i};
  end
