@@ -20,9 +20,6 @@ function outputStructure = psdRead(inputFile)
 %   output = psdRead("input.psd");
 %   output = psdRead("C:\Users\USER\Downloads\input.psd");
 %
-% Last revision:
-%   14. February 2019
-%
 %---------------------------------- Begin Code ---------------------------------
 
 tic;

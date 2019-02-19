@@ -23,9 +23,6 @@ function psdWrite(inputFolder, outputFile)
 %   psdWrite("C:\Users\USER\Downloads\images", "C:\Users\USER\Downloads\output");
 %   psdWrite("C:\Users\USER\Downloads\images", "C:\Users\USER\Downloads\output.psd");
 %
-% Last revision:
-%   14. February 2019
-%
 %---------------------------------- Begin Code ---------------------------------
 
 tic;
