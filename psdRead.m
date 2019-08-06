@@ -147,7 +147,20 @@ for i = 1:layerCount
     
     extraDataLength = layersAndMasks.(layer).layerRecords.extraDataLength;
         
-    fseek(fid, extraDataLength, 'cof'); %skip extra data
+%     fseek(fid, extraDataLength, 'cof'); %skip extra data
+    
+    LayerMaskDataSize=fread(fid,1,'uint32');
+    fseek(fid, LayerMaskDataSize, 'cof'); %skip Layer mask data
+    LayerBlendingRanges=fread(fid,1,'uint32');
+    fseek(fid, LayerBlendingRanges, 'cof'); %skip Layer Blending Ranges
+
+    name_whole=fread(fid,extraDataLength-LayerMaskDataSize-LayerBlendingRanges-2*4,'uint8=>char').'; % read whole layer name block
+    layer_name = name_whole(2:regexp(name_whole,'8BIM')-1); % get just the non-Unicode part with skipping an empty byte (to define length of string?)- not thorougly tested
+    layersAndMasks.(layer).layerRecords.Name=layer_name;
+    if isempty(layer_name)
+        layersAndMasks.(layer).layerRecords.Name=name_whole;
+        warning(['The name of ' (layer) ' was not parsed successfully.'])
+    end
 end
 
 data.rectangles = rectangles;
