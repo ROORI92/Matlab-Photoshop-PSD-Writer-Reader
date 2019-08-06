@@ -27,7 +27,12 @@ data.fid = openFile(inputFile);
 data = readHeader(data);
 data = readLayerInfo(data);
 data = readLayerImages(data);
+try
 data = readCompositeImage(data);
+catch
+    warning('Unable to read Image data')
+    data.compositeImage=[];
+end
 outputStructure = getOutputStructure(data);
 fclose(data.fid);
 
