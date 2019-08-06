@@ -85,26 +85,30 @@ for i = 1:layerCount
     currentRows = rectangles{i}(3);
     currentColumns = rectangles{i}(4);
  
-    tempImg{1} = uint8(zeros(currentColumns, currentRows));
-    tempImg{2} = uint8(zeros(currentColumns, currentRows));
-    tempImg{3} = uint8(zeros(currentColumns, currentRows));
-    
-    finalImg = uint8(zeros(currentColumns, currentRows, header.numSamples));
+%     tempImg{1} = uint8(zeros(currentColumns, currentRows));
+%     tempImg{2} = uint8(zeros(currentColumns, currentRows));
+%     tempImg{3} = uint8(zeros(currentColumns, currentRows));
+
+    finalImg = zeros(currentColumns, currentRows, header.numSamples,'uint8');
     
     for j = 1: header.numSamples
+        tempImg = zeros(currentColumns, currentRows,'uint8'); % MB
         scanlineLengths = fread(fid, currentRows, 'uint16');
         
         for p = 1:numel(scanlineLengths)
             idx = (p - 1) * currentColumns + 1;
-            tempImg{j}(idx:(idx + currentColumns - 1)) = decodeScanline(fid, scanlineLengths(p), currentColumns);
+%             tempImg{j}(idx:(idx + currentColumns - 1)) = decodeScanline(fid, scanlineLengths(p), currentColumns);
+            tempImg(idx:(idx + currentColumns - 1)) = decodeScanline(fid, scanlineLengths(p), currentColumns); %MB
+
         end
         
-        fseek(fid, 2 , 'cof'); 
+        fseek(fid, 2 , 'cof');
+        finalImg(:, :, j) = tempImg;
     end
     
-    finalImg(:, :, 1) = tempImg{1};
-    finalImg(:, :, 2) = tempImg{2};
-    finalImg(:, :, 3) = tempImg{3};
+%     finalImg(:, :, 1) = tempImg{1};
+%     finalImg(:, :, 2) = tempImg{2};
+%     finalImg(:, :, 3) = tempImg{3};
     
     finalImg = reshape(finalImg, [currentColumns, currentRows, header.numSamples]);
     finalImg = permute(finalImg, [2 1 3]);
