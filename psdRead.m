@@ -17,8 +17,8 @@ function outputStructure = psdRead(inputFile)
 %   outputStructure - Structure where metadata and layers are stored
 %
 % Examples: 
-%   output = psdRead("input.psd");
-%   output = psdRead("C:\Users\USER\Downloads\input.psd");
+%   output = psdRead('input.psd');
+%   output = psdRead('C:\Users\USER\Downloads\input.psd');
 %
 %---------------------------------- Begin Code ---------------------------------
 
@@ -31,7 +31,7 @@ data = readCompositeImage(data);
 outputStructure = getOutputStructure(data);
 fclose(data.fid);
 
-fprintf("Read Successful! Elapsed Time: %d seconds\n", toc);
+fprintf('Read Successful! Elapsed Time: %d seconds\n', toc);
 end
 
 
@@ -41,22 +41,22 @@ layersAndMasks = data.layersAndMasks;
 layerImages = data.layerImages;
 compositeImage = data.compositeImage; 
 
-fprintf("Arranging Data in Output Structure...");
+fprintf('Arranging Data in Output Structure...');
 outputStructure.metadata.header = header;
 outputStructure.metadata.layersInformation = layersAndMasks;
 outputStructure.layerImages = layerImages;
 outputStructure.compositeImage = compositeImage;
 
-fprintf(" Done\n");
+fprintf(' Done\n');
 end
 
 function data = readCompositeImage(data)
 fid = data.fid;
 header = data.header;
 
-fprintf("Reading Composite Image...");
+fprintf('Reading Composite Image...');
 compositeImage = decodeCompositeImage(fid, header);
-fprintf(" Done\n");
+fprintf(' Done\n');
 
 data.compositeImage = compositeImage;
 end
@@ -74,7 +74,7 @@ if (compression ~= 1)
     error('Unsupported Compression Format (%d).', compression);
 end
 
-fprintf("Reading Layers...");
+fprintf('Reading Layers...');
 
 %Reading the layers
 layerImages = cell(1, layerCount);
@@ -114,12 +114,12 @@ end
 
 data.layerImages = layerImages;
 
-fprintf(" Done\n");
+fprintf(' Done\n');
 end
 
 function data = readLayerInfo(data)
 fid = data.fid;
-fprintf("Reading Layers and Masks Data...");
+fprintf('Reading Layers and Masks Data...');
 
 % Read layers and masks....
 layersAndMasks.length = fread(fid, 1, 'uint32');
@@ -167,13 +167,13 @@ data.rectangles = rectangles;
 data.layersAndMasks = layersAndMasks;
 data.layerCount = layerCount;
 
-fprintf(" Done\n"); 
+fprintf(' Done\n'); 
 end
 
 function data = readHeader(data)
 fid = data.fid;
 
-fprintf("Reading Header Information...");
+fprintf('Reading Header Information...');
 
 header.FormatSignature= fread(fid, 4, 'uint8=>char');
 
@@ -203,11 +203,11 @@ end
 
 header.colorMode = fread(fid, 1, 'uint16');
 
-fprintf(" Done\n");
+fprintf(' Done\n');
 
 % Read Color Mode data, Image Resources...
 
-fprintf("Reading Color Mode Data...");
+fprintf('Reading Color Mode Data...');
 
 blockLength = fread(fid, 1, 'uint32');
 
@@ -219,9 +219,9 @@ else
     header.colorModeData.data = [];
 end
 
-fprintf(" Done\n");
+fprintf(' Done\n');
 
-fprintf("Reading Image Resources...");
+fprintf('Reading Image Resources...');
 
 blockLength = fread(fid, 1, 'uint32');
 
@@ -233,7 +233,7 @@ else
     header.imageResources.data = [];
 end
 
-fprintf(" Done\n");
+fprintf(' Done\n');
 
 data.header = header;
 end
@@ -241,11 +241,11 @@ end
 function fid = openFile(inputFile)
 % Open the file (ieee big-endian ordering)
 
-fprintf("Opening Input File...");
+fprintf('Opening Input File...');
 
 fid = fopen(inputFile, 'r', 'ieee-be');
 
-fprintf(" Done\n");
+fprintf(' Done\n');
 end
 
 function compositeImage = decodeCompositeImage(fid, header)
