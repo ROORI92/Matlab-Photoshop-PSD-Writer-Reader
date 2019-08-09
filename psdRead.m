@@ -27,12 +27,7 @@ data.fid = openFile(inputFile);
 data = readHeader(data);
 data = readLayerInfo(data);
 data = readLayerImages(data);
-try
 data = readCompositeImage(data);
-catch
-    warning('Unable to read Image data')
-    data.compositeImage=[];
-end
 outputStructure = getOutputStructure(data);
 fclose(data.fid);
 
@@ -56,6 +51,9 @@ fprintf(' Done\n');
 end
 
 function data = readCompositeImage(data)
+
+try
+
 fid = data.fid;
 header = data.header;
 
@@ -64,6 +62,12 @@ compositeImage = decodeCompositeImage(fid, header);
 fprintf(' Done\n');
 
 data.compositeImage = compositeImage;
+
+catch
+    warning('Unable to read Image data')
+    data.compositeImage=[];
+end
+
 end
 
 function data = readLayerImages(data)
