@@ -15,11 +15,11 @@ The two functions should also work with GNU Octave.
 
 - "outputFile" is the name or path of the output PSD file.
 
-This function will produce a photoshop PSD file called: "output.psd" which contains the input images as layers.
+This function will produce a photoshop PSD file called: "outputFileName.psd" which contains the input images as layers.
 
 ### Examples: 
-- `psdWrite("images", "output");` or `psdWrite("images", "output.psd");` Here "images" is a folder in the current directory, and "output.psd" will also be created in the current directory.
-- `psdWrite("C:\Users\USER\Downloads\images", "C:\Users\USER\Downloads\output");` or `psdWrite("C:\Users\USER\Downloads\images", "C:\Users\USER\Downloads\output.psd");`
+- `psdWrite('images', 'output');` or `psdWrite('images', 'output.psd');` Here "images" is a folder in the current directory, and "output.psd" will also be created in the current directory.
+- `psdWrite('C:\Users\USER\Downloads\images', 'C:\Users\USER\Downloads\output');` or `psdWrite('C:\Users\USER\Downloads\images', 'C:\Users\USER\Downloads\output.psd');`
 
 ## PSD Read:
 
@@ -36,8 +36,8 @@ This function will produce a photoshop PSD file called: "output.psd" which conta
 This function will read the input PSD file and extract the layer images, composite image and metadata into the Matlab workspace.
 
 ### Examples: 
-- `output = psdRead("input.psd");` Here "input.psd" is a PSD file in the current directory.
-- `output = psdRead("C:\Users\USER\Downloads\input.psd");`
+- `output = psdRead('input.psd');` Here "input.psd" is a PSD file in the current directory.
+- `output = psdRead('C:\Users\USER\Downloads\input.psd');`
 
 ## Limitations:
 - Only works with 8-Bit images (for now), if otherwise, the images are converted to 8-Bits.
