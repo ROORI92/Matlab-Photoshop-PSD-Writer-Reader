@@ -17,8 +17,8 @@ function outputStructure = psdRead(inputFile)
 %   outputStructure - Structure where metadata and layers are stored
 %
 % Examples: 
-%   output = psdRead("input.psd");
-%   output = psdRead("C:\Users\USER\Downloads\input.psd");
+%   output = psdRead('input.psd');
+%   output = psdRead('C:\Users\USER\Downloads\input.psd');
 %
 %---------------------------------- Begin Code ---------------------------------
 
@@ -27,11 +27,16 @@ data.fid = openFile(inputFile);
 data = readHeader(data);
 data = readLayerInfo(data);
 data = readLayerImages(data);
+try
 data = readCompositeImage(data);
+catch
+    warning('Unable to read Image data')
+    data.compositeImage=[];
+end
 outputStructure = getOutputStructure(data);
 fclose(data.fid);
 
-fprintf("Read Successful! Elapsed Time: %d seconds\n", toc);
+fprintf('Read Successful! Elapsed Time: %d seconds\n', toc);
 end
 
 
@@ -41,22 +46,22 @@ layersAndMasks = data.layersAndMasks;
 layerImages = data.layerImages;
 compositeImage = data.compositeImage; 
 
-fprintf("Arranging Data in Output Structure...");
+fprintf('Arranging Data in Output Structure...');
 outputStructure.metadata.header = header;
 outputStructure.metadata.layersInformation = layersAndMasks;
 outputStructure.layerImages = layerImages;
 outputStructure.compositeImage = compositeImage;
 
-fprintf(" Done\n");
+fprintf(' Done\n');
 end
 
 function data = readCompositeImage(data)
 fid = data.fid;
 header = data.header;
 
-fprintf("Reading Composite Image...");
+fprintf('Reading Composite Image...');
 compositeImage = decodeCompositeImage(fid, header);
-fprintf(" Done\n");
+fprintf(' Done\n');
 
 data.compositeImage = compositeImage;
 end
@@ -74,7 +79,7 @@ if (compression ~= 1)
     error('Unsupported Compression Format (%d).', compression);
 end
 
-fprintf("Reading Layers...");
+fprintf('Reading Layers...');
 
 %Reading the layers
 layerImages = cell(1, layerCount);
@@ -85,26 +90,30 @@ for i = 1:layerCount
     currentRows = rectangles{i}(3);
     currentColumns = rectangles{i}(4);
  
-    tempImg{1} = uint8(zeros(currentColumns, currentRows));
-    tempImg{2} = uint8(zeros(currentColumns, currentRows));
-    tempImg{3} = uint8(zeros(currentColumns, currentRows));
-    
-    finalImg = uint8(zeros(currentColumns, currentRows, header.numSamples));
+%     tempImg{1} = uint8(zeros(currentColumns, currentRows));
+%     tempImg{2} = uint8(zeros(currentColumns, currentRows));
+%     tempImg{3} = uint8(zeros(currentColumns, currentRows));
+
+    finalImg = zeros(currentColumns, currentRows, header.numSamples,'uint8');
     
     for j = 1: header.numSamples
+        tempImg = zeros(currentColumns, currentRows,'uint8'); % MB
         scanlineLengths = fread(fid, currentRows, 'uint16');
         
         for p = 1:numel(scanlineLengths)
             idx = (p - 1) * currentColumns + 1;
-            tempImg{j}(idx:(idx + currentColumns - 1)) = decodeScanline(fid, scanlineLengths(p), currentColumns);
+%             tempImg{j}(idx:(idx + currentColumns - 1)) = decodeScanline(fid, scanlineLengths(p), currentColumns);
+            tempImg(idx:(idx + currentColumns - 1)) = decodeScanline(fid, scanlineLengths(p), currentColumns); %MB
+
         end
         
-        fseek(fid, 2 , 'cof'); 
+        fseek(fid, 2 , 'cof');
+        finalImg(:, :, j) = tempImg;
     end
     
-    finalImg(:, :, 1) = tempImg{1};
-    finalImg(:, :, 2) = tempImg{2};
-    finalImg(:, :, 3) = tempImg{3};
+%     finalImg(:, :, 1) = tempImg{1};
+%     finalImg(:, :, 2) = tempImg{2};
+%     finalImg(:, :, 3) = tempImg{3};
     
     finalImg = reshape(finalImg, [currentColumns, currentRows, header.numSamples]);
     finalImg = permute(finalImg, [2 1 3]);
@@ -114,12 +123,12 @@ end
 
 data.layerImages = layerImages;
 
-fprintf(" Done\n");
+fprintf(' Done\n');
 end
 
 function data = readLayerInfo(data)
 fid = data.fid;
-fprintf("Reading Layers and Masks Data...");
+fprintf('Reading Layers and Masks Data...');
 
 % Read layers and masks....
 layersAndMasks.length = fread(fid, 1, 'uint32');
@@ -147,20 +156,33 @@ for i = 1:layerCount
     
     extraDataLength = layersAndMasks.(layer).layerRecords.extraDataLength;
         
-    fseek(fid, extraDataLength, 'cof'); %skip extra data
+%     fseek(fid, extraDataLength, 'cof'); %skip extra data
+    
+    LayerMaskDataSize=fread(fid,1,'uint32');
+    fseek(fid, LayerMaskDataSize, 'cof'); %skip Layer mask data
+    LayerBlendingRanges=fread(fid,1,'uint32');
+    fseek(fid, LayerBlendingRanges, 'cof'); %skip Layer Blending Ranges
+
+    name_whole=fread(fid,extraDataLength-LayerMaskDataSize-LayerBlendingRanges-2*4,'uint8=>char').'; % read whole layer name block
+    layer_name = name_whole(2:regexp(name_whole,'8BIM')-1); % get just the non-Unicode part with skipping an empty byte (to define length of string?)- not thorougly tested
+    layersAndMasks.(layer).layerRecords.Name=layer_name;
+    if isempty(layer_name)
+        layersAndMasks.(layer).layerRecords.Name=name_whole;
+        warning(['The name of ' (layer) ' was not parsed successfully.'])
+    end
 end
 
 data.rectangles = rectangles;
 data.layersAndMasks = layersAndMasks;
 data.layerCount = layerCount;
 
-fprintf(" Done\n"); 
+fprintf(' Done\n'); 
 end
 
 function data = readHeader(data)
 fid = data.fid;
 
-fprintf("Reading Header Information...");
+fprintf('Reading Header Information...');
 
 header.FormatSignature= fread(fid, 4, 'uint8=>char');
 
@@ -190,11 +212,11 @@ end
 
 header.colorMode = fread(fid, 1, 'uint16');
 
-fprintf(" Done\n");
+fprintf(' Done\n');
 
 % Read Color Mode data, Image Resources...
 
-fprintf("Reading Color Mode Data...");
+fprintf('Reading Color Mode Data...');
 
 blockLength = fread(fid, 1, 'uint32');
 
@@ -206,9 +228,9 @@ else
     header.colorModeData.data = [];
 end
 
-fprintf(" Done\n");
+fprintf(' Done\n');
 
-fprintf("Reading Image Resources...");
+fprintf('Reading Image Resources...');
 
 blockLength = fread(fid, 1, 'uint32');
 
@@ -220,7 +242,7 @@ else
     header.imageResources.data = [];
 end
 
-fprintf(" Done\n");
+fprintf(' Done\n');
 
 data.header = header;
 end
@@ -228,11 +250,11 @@ end
 function fid = openFile(inputFile)
 % Open the file (ieee big-endian ordering)
 
-fprintf("Opening Input File...");
+fprintf('Opening Input File...');
 
 fid = fopen(inputFile, 'r', 'ieee-be');
 
-fprintf(" Done\n");
+fprintf(' Done\n');
 end
 
 function compositeImage = decodeCompositeImage(fid, header)
