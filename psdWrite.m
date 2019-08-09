@@ -18,10 +18,10 @@ function psdWrite(inputFolder, outputFile)
 %   outputFile  - Name or path of the output PSD file.
 %
 % Examples: 
-%   psdWrite("images", "output");
-%   psdWrite("images", "output.psd");
-%   psdWrite("C:\Users\USER\Downloads\images", "C:\Users\USER\Downloads\output");
-%   psdWrite("C:\Users\USER\Downloads\images", "C:\Users\USER\Downloads\output.psd");
+%   psdWrite('images', 'output');
+%   psdWrite('images", 'output.psd');
+%   psdWrite('C:\Users\USER\Downloads\images', 'C:\Users\USER\Downloads\output');
+%   psdWrite('C:\Users\USER\Downloads\images', 'C:\Users\USER\Downloads\output.psd');
 %
 %---------------------------------- Begin Code ---------------------------------
 
