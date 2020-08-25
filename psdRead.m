@@ -27,6 +27,7 @@ data.fid = openFile(inputFile);
 data = readHeader(data);
 data = readLayerInfo(data);
 data = readLayerImages(data);
+readGlobalLayerMaskInfo(data);
 data = readCompositeImage(data);
 outputStructure = getOutputStructure(data);
 fclose(data.fid);
@@ -76,50 +77,75 @@ layerCount = data.layerCount;
 header = data.header;
 rectangles = data.rectangles;
 
-compression = fread(fid, 1, 'uint16');
-
-if (compression ~= 1)
-    fclose(fid);
-    error('Unsupported Compression Format (%d).', compression);
-end
+% % MB: moved inside loop through channels of each layer
+% compression = fread(fid, 1, 'uint16');
+% 
+% if (compression ~= 1)
+%     fclose(fid);
+%     error('Unsupported Compression Format (%d).', compression);
+% end
 
 fprintf('Reading Layers...');
 
 %Reading the layers
 layerImages = cell(1, layerCount);
 
-tempImg = cell(1, header.numSamples);
+% tempImg = cell(1, header.numSamples); % MB: changed to array
+
+layer_ids=fieldnames(data.layersAndMasks); %MB
 
 for i = 1:layerCount
-    currentRows = rectangles{i}(3);
-    currentColumns = rectangles{i}(4);
- 
+%     currentRows = rectangles{i}(3);
+%     currentColumns = rectangles{i}(4);
+    currentRows = min(abs(rectangles{i}(3)-rectangles{i}(1)),rectangles{i}(3)); %MB: min treats overflow
+    currentColumns = min(abs(rectangles{i}(4)-rectangles{i}(2)),rectangles{i}(4)); %MB min: treats overflow
+
+    header=data.layersAndMasks.(layer_ids{4+i}).layerRecords; %MB: get header of current layer
+    
 %     tempImg{1} = uint8(zeros(currentColumns, currentRows));
 %     tempImg{2} = uint8(zeros(currentColumns, currentRows));
 %     tempImg{3} = uint8(zeros(currentColumns, currentRows));
 
-    finalImg = zeros(currentColumns, currentRows, header.numSamples,'uint8');
+    finalImg = zeros(currentColumns, currentRows, header.numChannels,'uint8');% MB
+%     finalImg = zeros(currentColumns, currentRows, header.numSamples,'uint8');
     
-    for j = 1: header.numSamples
+    for j = 1: header.numChannels
+%     for j = 1: header.numSamples % MB
         tempImg = zeros(currentColumns, currentRows,'uint8'); % MB
-        scanlineLengths = fread(fid, currentRows, 'uint16');
         
-        for p = 1:numel(scanlineLengths)
-            idx = (p - 1) * currentColumns + 1;
-%             tempImg{j}(idx:(idx + currentColumns - 1)) = decodeScanline(fid, scanlineLengths(p), currentColumns);
-            tempImg(idx:(idx + currentColumns - 1)) = decodeScanline(fid, scanlineLengths(p), currentColumns); %MB
-
+        compression = fread(fid, 1, 'uint16');
+        switch compression
+            case 1 % RLE
+                scanlineLengths = fread(fid, currentRows, 'uint16');
+                
+                for p = 1:numel(scanlineLengths)
+                    idx = (p - 1) * currentColumns + 1;
+                    %             tempImg{j}(idx:(idx + currentColumns - 1)) = decodeScanline(fid, scanlineLengths(p), currentColumns);
+                    tempLine = decodeScanline(fid, scanlineLengths(p), currentColumns); %MB
+                    tempImg(idx:(idx + currentColumns - 1)) = tempLine; %MB
+                end
+                
+                %         fseek(fid, 2 , 'cof'); %MB commented - replaced
+                %         by reading compression bytes
+                finalImg(:, :, j) = tempImg;
+                
+            case 0 % raw image
+                tempLine = fread(fid, currentColumns * currentRows, 'uint8');
+                tempImg = reshape(tempLine,currentColumns, currentRows);
+                finalImg(:, :, j) = tempImg;
+            otherwise
+%                 fclose(fid);
+                warning('Unsupported Compression Format (%d) in layer %d channel %d.', compression, i, j);
+                break
         end
         
-        fseek(fid, 2 , 'cof');
-        finalImg(:, :, j) = tempImg;
     end
     
 %     finalImg(:, :, 1) = tempImg{1};
 %     finalImg(:, :, 2) = tempImg{2};
 %     finalImg(:, :, 3) = tempImg{3};
     
-    finalImg = reshape(finalImg, [currentColumns, currentRows, header.numSamples]);
+%     finalImg = reshape(finalImg, [currentColumns, currentRows, header.numSamples]);
     finalImg = permute(finalImg, [2 1 3]);
     
     layerImages{i} = finalImg;
@@ -135,6 +161,7 @@ fid = data.fid;
 fprintf('Reading Layers and Masks Data...');
 
 % Read layers and masks....
+layersAndMasks.start = ftell(fid);
 layersAndMasks.length = fread(fid, 1, 'uint32');
 layersAndMasks.layerInfoLength = fread(fid, 1, 'uint32');
 layersAndMasks.layerCount = fread(fid, 1, 'uint16');
@@ -181,6 +208,34 @@ data.layersAndMasks = layersAndMasks;
 data.layerCount = layerCount;
 
 fprintf(' Done\n'); 
+end
+
+function readGlobalLayerMaskInfo(data)
+% need to move fseek(data.fid,41,'cof');
+% just skip this section
+fseek(data.fid,data.layersAndMasks.start+data.layersAndMasks.length...
+    -ftell(data.fid)+4,'cof'); %MB: 4 bytes of 0 defining the end of Additional Layer Information block?
+
+% attemps to read were to complicated/complex
+% fid = data.fid;
+% 
+% % fseek(fid, 1, 'cof'); % experimental
+% GlobalLayerMaskInfoLength = fread(fid, 1, 'uint32');
+% fseek(fid, GlobalLayerMaskInfoLength, 'cof');
+% 
+% % Additional layer information
+% % fseek(fid, 1, 'cof');
+% whatishere = fread(fid, 1, 'uint8')
+% FormatSignature= fread(fid, 4, 'uint8=>char');
+% CharacterCode= fread(fid, 4, 'uint8=>char');
+% % fseek(fid, 2*4, 'cof');
+% AdditionalLayerInfoLength = fread(fid, 1, 'uint32');
+% fseek(fid, AdditionalLayerInfoLength, 'cof');
+% 
+% % if strcmp(CharacterCode.','Patt')
+% %     PatternLength = fread(fid, 1, 'uint32');
+% %     fseek(fid, PatternLength, 'cof');
+% % end
 end
 
 function data = readHeader(data)
